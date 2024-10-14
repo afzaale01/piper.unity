@@ -10,7 +10,6 @@ namespace Piper.Samples
         public InputField input;
         public Button submitButton;
         public Text timerText;
-        public GameObject cube;
 
         private AudioSource _source;
 
@@ -21,10 +20,7 @@ namespace Piper.Samples
             submitButton.onClick.AddListener(OnButtonPressed);
         }
 
-        private void Update()
-        {
-            cube.transform.Rotate(Vector3.one * (Time.deltaTime * 10f));
-        }
+       
 
         private void OnButtonPressed()
         {
