@@ -10,15 +10,33 @@ public class TextDataProcessor
     public Action<List<string>> OnReadyComplete;
 
     private List<string> words ;
-
+    private List<string> wrongWordsList;
     public TextDataProcessor() 
     {
         if (this.words == null)
             this.words = new List<string>();
+        if (this.wrongWordsList == null)
+            this.wrongWordsList = new List<string>();
     }
 
+    public void ReadDataList()
+    {
+        string filePath = Application.streamingAssetsPath + "/data.txt";
+        ReadFromPath(filePath, this.words);
+    }
 
-    public void ReadFromPath(string filePath)
+    public void ReadMisspelledList()
+    {
+        string misspelledWords = Application.streamingAssetsPath + "/misspelled.txt";
+        ReadFromPath(misspelledWords, this.wrongWordsList);
+    }
+    public void AddToWrongWordList(string word)
+    {
+        if (this.wrongWordsList != null && !string.IsNullOrWhiteSpace(word) && !wrongWordsList.Contains(word))
+            this.wrongWordsList.Add(word);        
+    }
+
+    private void ReadFromPath(string filePath, List<string> words)
     {
         try
         {
@@ -32,9 +50,7 @@ public class TextDataProcessor
                 {
                     string[] wordsInLine = line.Split(' '); // Split each line into words based on spaces
                     words.AddRange(wordsInLine); // Add the words from the line to the list
-                }
-
-                OnReadyComplete.Invoke(words);
+                }               
 
             }
             else
@@ -47,12 +63,42 @@ public class TextDataProcessor
             Debug.LogException(ex);
         }
     }
+    private void WriteToPath(string filePath, List<string> wrongWordsList) 
+    {
 
-    public string getRandomWord() 
+    }
+
+    public string getRandomWord(bool dataSet) 
     {
         if (words == null || words.Count < 0)
             return "";
-        return words[UnityEngine.Random.Range(0, words.Count - 1)];
+
+        string selectedWord = string.Empty;
+        int index;
+        try
+        {
+
+            if (dataSet && wrongWordsList.Count > 0)
+            {
+                index = UnityEngine.Random.Range(0, wrongWordsList.Count - 1);
+
+                Debug.Log($"Wrong Words Selection Index {index}");
+
+                selectedWord = wrongWordsList[index].TrimEnd('\r');
+            }
+            else if (!dataSet || string.IsNullOrEmpty(selectedWord))
+            {
+                index = UnityEngine.Random.Range(0, words.Count - 1);
+                Debug.Log($"Words Selection Index {index}");
+                selectedWord = words[index].TrimEnd('\r');
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"exception {ex} selectedWord {selectedWord}");
+        }
+            return selectedWord;
+       
     }
 
 }
