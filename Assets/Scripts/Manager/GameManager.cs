@@ -62,7 +62,7 @@ public class GameManager : MonoBehaviour
 
     public void StartPlay()
     {
-        currentSelectedWord = textDataProcessor.getRandomWord(loadMisspelledWordsOnly);
+        currentSelectedWord = textDataProcessor.getNextWord(loadMisspelledWordsOnly);
         Debug.Log($"Selected Word {currentSelectedWord}");
         OnTextWordPlay(currentSelectedWord);
     }
@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
     }
     public void SelectNextWord()
     {
-        string word = textDataProcessor.getRandomWord(loadMisspelledWordsOnly);
+        string word = textDataProcessor.getNextWord(loadMisspelledWordsOnly);
         if (currentSelectedWord.CompareTo(word) == 1)
         {
             currentSelectedWord = word;

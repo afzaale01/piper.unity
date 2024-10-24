@@ -8,9 +8,13 @@ public class TextDataProcessor
 {
 
     public Action<List<string>> OnReadyComplete;
-
     private List<string> words ;
     private List<string> wrongWordsList;
+
+    private int counter =0;
+
+
+
     public TextDataProcessor() 
     {
         if (this.words == null)
@@ -18,13 +22,11 @@ public class TextDataProcessor
         if (this.wrongWordsList == null)
             this.wrongWordsList = new List<string>();
     }
-
     public void ReadDataList()
     {
         string filePath = Application.streamingAssetsPath + "/data.txt";
         ReadFromPath(filePath, this.words);
     }
-
     public void ReadMisspelledList()
     {
         string misspelledWords = Application.streamingAssetsPath + "/misspelled.txt";
@@ -35,7 +37,6 @@ public class TextDataProcessor
         if (this.wrongWordsList != null && !string.IsNullOrWhiteSpace(word) && !wrongWordsList.Contains(word))
             this.wrongWordsList.Add(word);        
     }
-
     private void ReadFromPath(string filePath, List<string> words)
     {
         try
@@ -63,11 +64,25 @@ public class TextDataProcessor
             Debug.LogException(ex);
         }
     }
-    private void WriteToPath(string filePath, List<string> wrongWordsList) 
+    private void WriteToFile(List<string> words, string filePath)
     {
-
+        try
+        {
+            // Create a new file or overwrite an existing one
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                // Iterate through the list of words and write each word to a new line
+                foreach (string word in words)
+                {
+                    writer.WriteLine(word);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
     }
-
     public string getRandomWord(bool dataSet) 
     {
         if (words == null || words.Count < 0)
@@ -99,6 +114,38 @@ public class TextDataProcessor
         }
             return selectedWord;
        
+    }
+
+    public string getNextWord(bool dataSet)
+    {
+        if (words == null || words.Count < 0)
+            return "";
+
+        string selectedWord = string.Empty;
+        int index;
+        try
+        {
+
+            index = counter;
+            if (dataSet && wrongWordsList.Count > 0 && counter < wrongWordsList.Count)
+            {
+                //Debug.Log($"Wrong Words Selection Index {index}");
+                selectedWord = wrongWordsList[index].TrimEnd('\r');
+                counter++;
+            }
+            else if (!dataSet || string.IsNullOrEmpty(selectedWord) && counter < words.Count)
+            {
+                //Debug.Log($"Words Selection Index {index}");
+                selectedWord = words[index].TrimEnd('\r');
+                counter++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"exception {ex} selectedWord {selectedWord}");
+        }
+        return selectedWord;
+
     }
 
 }
