@@ -10,10 +10,11 @@ public class TextDataProcessor
     public Action<List<string>> OnReadyComplete;
     private List<string> words ;
     private List<string> wrongWordsList;
-
     private int counter =0;
-
-
+    List<string> filenames = new List<string>();
+    private bool isReadCompleted;
+    private Dictionary<string, List<string>> wordsList = new Dictionary<string, List<string>>();
+    private Dictionary<string, int> fileNamesIndex = new Dictionary<string, int>();
 
     public TextDataProcessor() 
     {
@@ -22,21 +23,16 @@ public class TextDataProcessor
         if (this.wrongWordsList == null)
             this.wrongWordsList = new List<string>();
     }
-    public void ReadDataList()
-    {
-        string filePath = Application.streamingAssetsPath + "/data.txt";
-        ReadFromPath(filePath, this.words);
-    }
-    public void ReadMisspelledList()
-    {
-        string misspelledWords = Application.streamingAssetsPath + "/misspelled.txt";
-        ReadFromPath(misspelledWords, this.wrongWordsList);
-    }
+    
     public void AddToWrongWordList(string word)
     {
         if (this.wrongWordsList != null && !string.IsNullOrWhiteSpace(word) && !wrongWordsList.Contains(word))
             this.wrongWordsList.Add(word);        
     }
+
+    #region Private Function
+
+
     private void ReadFromPath(string filePath, List<string> words)
     {
         try
@@ -64,6 +60,35 @@ public class TextDataProcessor
             Debug.LogException(ex);
         }
     }
+    private List<string> ReadFromPath(string filePath)
+    {
+        try
+        {
+            List<string> words = new List<string>();
+            if (File.Exists(filePath))
+            {
+                string text = File.ReadAllText(filePath);
+                string[] lines = text.Split('\n'); // Split the text into lines based on newlines
+
+                foreach (string line in lines)
+                {
+                    string[] wordsInLine = line.Split(' '); // Split each line into words based on spaces
+                    words.AddRange(wordsInLine); // Add the words from the line to the list
+                }
+                return words;
+            }
+            else
+            {
+                Debug.Log("File not found: " + filePath);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+            return null;
+        }
+    }
     private void WriteToFile(List<string> words, string filePath)
     {
         try
@@ -83,69 +108,82 @@ public class TextDataProcessor
             Debug.LogException(ex);
         }
     }
-    public string getRandomWord(bool dataSet) 
-    {
-        if (words == null || words.Count < 0)
-            return "";
 
+
+    #endregion
+
+    public string getNextWordFrom(string dataSetName)
+    {
         string selectedWord = string.Empty;
-        int index;
+        counter = fileNamesIndex[dataSetName];
         try
         {
+            List<string> words = wordsList[dataSetName];
 
-            if (dataSet && wrongWordsList.Count > 0)
-            {
-                index = UnityEngine.Random.Range(0, wrongWordsList.Count - 1);
+            if (words == null || words.Count < 0)
+                return "";
 
-                Debug.Log($"Wrong Words Selection Index {index}");
+            selectedWord = words[counter].TrimEnd('\r');
+            counter++;
+            fileNamesIndex.Add(dataSetName,counter);
+            if (counter >= words.Count)
+                counter = 0;
 
-                selectedWord = wrongWordsList[index].TrimEnd('\r');
-            }
-            else if (!dataSet || string.IsNullOrEmpty(selectedWord))
-            {
-                index = UnityEngine.Random.Range(0, words.Count - 1);
-                Debug.Log($"Words Selection Index {index}");
-                selectedWord = words[index].TrimEnd('\r');
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.Log($"exception {ex} selectedWord {selectedWord}");
-        }
             return selectedWord;
-       
-    }
-
-    public string getNextWord(bool dataSet)
-    {
-        if (words == null || words.Count < 0)
-            return "";
-
-        string selectedWord = string.Empty;
-        int index;
-        try
-        {
-
-            index = counter;
-            if (dataSet && wrongWordsList.Count > 0 && counter < wrongWordsList.Count)
-            {
-                //Debug.Log($"Wrong Words Selection Index {index}");
-                selectedWord = wrongWordsList[index].TrimEnd('\r');
-                counter++;
-            }
-            else if (!dataSet || string.IsNullOrEmpty(selectedWord) && counter < words.Count)
-            {
-                //Debug.Log($"Words Selection Index {index}");
-                selectedWord = words[index].TrimEnd('\r');
-                counter++;
-            }
         }
         catch (Exception ex)
         {
             Debug.Log($"exception {ex} selectedWord {selectedWord}");
         }
+
+        Debug.Log($"{nameof(TextDataProcessor)}: Counter state {counter}");
+
         return selectedWord;
 
+    }
+    public void ReadFilesFromStreamingAssets() 
+    {
+        string[] filePaths = Directory.GetFiles(Application.streamingAssetsPath, "*.txt", SearchOption.TopDirectoryOnly);
+        
+        foreach (string filePath in filePaths)
+        {
+            // Extract filename without the path
+            string filename = Path.GetFileNameWithoutExtension(filePath);
+            filenames.Add(filename);
+            wordsList.Add(filename, ReadFromPath(filePath));
+            fileNamesIndex.Add(filename,PlayerPrefs.GetInt(filename));
+            Debug.Log($"{nameof(TextDataProcessor)}: Reading file {filename} from File Path {filePath}");
+        }
+
+        isReadCompleted = true;
+
+
+    }
+    public List<string> GetFileNames()
+    {
+        return filenames != null ? filenames : null;
+    }
+    public List<string> GetWordsOfFile(string name) 
+    {
+        if (wordsList.ContainsKey(name) && isReadCompleted)
+        {
+            return wordsList[name];
+        }
+        else 
+        {
+            return null;
+        }
+    }
+    public void SaveCurrentIndex(string fileName)
+    {
+        try
+        {
+            PlayerPrefs.SetInt(fileName,counter);
+        }
+        catch (Exception ex)
+        {
+
+        }
     }
 
 }

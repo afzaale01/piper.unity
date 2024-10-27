@@ -14,23 +14,41 @@ public class UIController : MonoBehaviour
     [SerializeField] private TMP_Text realWord;
     [SerializeField] private Toggle saveMisspelledWords;
     [SerializeField] private Toggle loadOnlyMisspelledWords;
-
+    [SerializeField] private TMP_Dropdown _dataDropDown;
+    
     #region Private Variable
     private GameManager gameManager;
+    private TextDataProcessor _textDataProcessor;
     #endregion
-
-
-    
-
-
 
     // Start is called before the first frame update
     void Start()
     {
-        if(gameManager == null)
+        if (gameManager == null)
+        {
             gameManager = FindObjectOfType<GameManager>();
-
+            _textDataProcessor = gameManager.textDataProcessor;
+        }
         initialization();
+    }
+
+    private void Update()
+    {
+        if (gameManager != null && userInputField.text.Length >0 )
+        {
+            if (Input.GetKeyDown(KeyCode.Return))
+            {
+                OnSubmit();
+            }
+        }
+
+        if (gameManager != null && gameManager.getCurrentState() == State.Win)
+        {
+            if (Input.GetKeyDown(KeyCode.Return))
+            {
+                OnSpeakNextBtn();
+            }
+        }
     }
 
     private void initialization()
@@ -39,8 +57,21 @@ public class UIController : MonoBehaviour
         speakBtn.onClick.AddListener(OnSpeakNextBtn);
 
         if (gameManager != null)
+        {
             gameManager.OnShowHint += OnShowHint;
 
+            SetupDropDown(this._textDataProcessor.GetFileNames());
+
+        }
+    }
+
+    private void SetupDropDown(List<string> list)
+    {
+        if (_dataDropDown != null)
+        {
+            _dataDropDown.ClearOptions();
+            _dataDropDown.AddOptions(list);
+        }
     }
 
     private void OnShowHint(string obj)
@@ -59,11 +90,10 @@ public class UIController : MonoBehaviour
     {
         if (gameManager != null)
         {
-            gameManager.UpdateDataSelection(loadOnlyMisspelledWords.isOn);
+            gameManager.UpdateDataSelection(getTheSelectionFromDropDown());
             gameManager.StartPlay();
         }
     }
-
 
     private void OnSubmit()
     {
@@ -74,7 +104,7 @@ public class UIController : MonoBehaviour
         else
         {
            gameManager.setState(State.Submitted);
-           bool result =  gameManager.evaluateCurrentWord(userInputField.text);
+           bool result =  gameManager.EvaluateCurrentWord(userInputField.text);
 
             if (result)
             {
@@ -106,7 +136,9 @@ public class UIController : MonoBehaviour
         // Next word select
         submitBtn.gameObject.SetActive(false);
         speakBtn.gameObject.SetActive(true);
-
+        userInputField.text = "";
+        userInputField.Select();
+        userInputField.ActivateInputField();
         // Wait for ready to play input from user
         
     }
@@ -125,6 +157,18 @@ public class UIController : MonoBehaviour
             attemptResultText.color = Color.white;
             attemptResultText.text = "Try to make it";
         }
+    }
+
+    private string getTheSelectionFromDropDown()
+    {
+        int selectedIndex = _dataDropDown.value;
+
+        // Get the list of options
+        TMP_Dropdown.OptionData[] options = _dataDropDown.options.ToArray();
+
+        // Access the selected option using the index
+        string selectedFilename = options[selectedIndex].text;
+        return string.IsNullOrEmpty(selectedFilename) ? "data" : selectedFilename;
     }
 
 }

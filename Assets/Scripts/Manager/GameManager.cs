@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Piper;
 public class GameManager : MonoBehaviour
@@ -10,11 +8,12 @@ public class GameManager : MonoBehaviour
 
     #region Services Modules
     [SerializeField] private AudioManager audioManager;
-    private TextDataProcessor textDataProcessor;
+    public TextDataProcessor textDataProcessor { get; private set; }
     [SerializeField] private PiperManager piperManager;
 
     private string currentSelectedWord;
     #endregion
+
     #region Public Action
     public Action OnStart;
     public Action OnSubmission;
@@ -24,12 +23,10 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region DataConfigurations
-    [SerializeField] private bool loadMisspelledWordsOnly;
+    public string selectedDataFile { get;  private set; }
     #endregion
 
     private int AttemptCount;
-
-
 
     void Start()
     {
@@ -39,8 +36,8 @@ public class GameManager : MonoBehaviour
             // Data population            
             if (textDataProcessor != null)
             {
-                textDataProcessor.ReadDataList();
-                textDataProcessor.ReadMisspelledList();
+                textDataProcessor.ReadFilesFromStreamingAssets();
+                
             }
         }
         catch (Exception ex)
@@ -48,29 +45,31 @@ public class GameManager : MonoBehaviour
             Debug.Log(ex.Message);
         }
     }
-
+    
     private void ServicesInitialization()
     {
-        textDataProcessor = new TextDataProcessor();
+        this.textDataProcessor = new TextDataProcessor();
 
     }
-
-    public void UpdateDataSelection(bool setData) 
+    
+    public void UpdateDataSelection(string selectedDataFile)
     {
-        loadMisspelledWordsOnly = setData;
+        this.selectedDataFile = selectedDataFile;
     }
-
+    
     public void StartPlay()
     {
-        currentSelectedWord = textDataProcessor.getNextWord(loadMisspelledWordsOnly);
+        currentSelectedWord = textDataProcessor.getNextWordFrom(this.selectedDataFile);
         Debug.Log($"Selected Word {currentSelectedWord}");
         OnTextWordPlay(currentSelectedWord);
     }
+    
     private async void OnTextWordPlay(string text)
     {
         var audio = await piperManager.TextToSpeech(text);
         audioManager.PlayAudioClip(audio);
     }
+    
     public void SpeakAgainSelectedWord()
     {
         if (string.IsNullOrEmpty(this.currentSelectedWord))
@@ -78,10 +77,11 @@ public class GameManager : MonoBehaviour
         OnTextWordPlay(currentSelectedWord);
         
     }
+    
     public void SelectNextWord()
     {
-        string word = textDataProcessor.getNextWord(loadMisspelledWordsOnly);
-        if (currentSelectedWord.CompareTo(word) == 1)
+        string word = textDataProcessor.getNextWordFrom(this.selectedDataFile);
+        if (currentSelectedWord != word)
         {
             currentSelectedWord = word;
             OnTextWordPlay(currentSelectedWord);
@@ -89,10 +89,11 @@ public class GameManager : MonoBehaviour
         }
         else 
         {
-            SelectNextWord();
+            //SelectNextWord();
         }
     }
-    public bool evaluateCurrentWord(string input)
+    
+    public bool EvaluateCurrentWord(string input)
     {
         // Remove the trailing '\r' from the currentSelectedWord if it exists
         string cleanedCurrentWord = currentSelectedWord.TrimEnd('\r');
@@ -104,7 +105,7 @@ public class GameManager : MonoBehaviour
         {
             AttemptCount++;
             // Add the word to wrong queue
-            textDataProcessor.AddToWrongWordList(input.ToLower().Trim());
+            //textDataProcessor.AddToWrongWordList(input.ToLower().Trim());
             // Store the word in another file and write it streaming assets.
 
             if (AttemptCount >= 2)
@@ -113,12 +114,15 @@ public class GameManager : MonoBehaviour
         else 
         {
             AttemptCount = 0;
+            textDataProcessor.SaveCurrentIndex(selectedDataFile);
         }
 
 
         return result;
     }
+    
     public State getCurrentState() => currnetState;
+    
     public void setState(State state)
     {
         currnetState = state;
@@ -138,10 +142,9 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        Debug.Log($"Current State {currnetState}");
+        Debug.Log($"{nameof(GameManager)}:Current State {currnetState}");
     }
-
-
+    
 }
 
 
