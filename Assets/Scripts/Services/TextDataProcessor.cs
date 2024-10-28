@@ -8,26 +8,28 @@ public class TextDataProcessor
 {
 
     public Action<List<string>> OnReadyComplete;
-    private List<string> words ;
-    private List<string> wrongWordsList;
+   
+    private bool isReadCompleted;
+    bool isFirstTime = false;
     private int counter =0;
     List<string> filenames = new List<string>();
-    private bool isReadCompleted;
     private Dictionary<string, List<string>> wordsList = new Dictionary<string, List<string>>();
     private Dictionary<string, int> fileNamesIndex = new Dictionary<string, int>();
+    string wrongWordFileName = "misspelled";
 
     public TextDataProcessor() 
     {
-        if (this.words == null)
-            this.words = new List<string>();
-        if (this.wrongWordsList == null)
-            this.wrongWordsList = new List<string>();
+        
     }
     
     public void AddToWrongWordList(string word)
     {
-        if (this.wrongWordsList != null && !string.IsNullOrWhiteSpace(word) && !wrongWordsList.Contains(word))
-            this.wrongWordsList.Add(word);        
+        if (wordsList[wrongWordFileName] != null && !wordsList[wrongWordFileName].Contains(word))
+        {
+            wordsList[wrongWordFileName].Add(word);
+            Debug.Log($"{nameof(TextDataProcessor)}: Count of words list {wordsList[wrongWordFileName].Count}");
+            WriteDataForSavingWrongWords(word);
+        }
     }
 
     #region Private Function
@@ -110,22 +112,56 @@ public class TextDataProcessor
     }
 
 
+    public void AppendWordToFile(string filePath, string word)
+    {
+        try
+        {
+            // Append the word to the file, creating it if it doesn't exist
+            using (StreamWriter writer = new StreamWriter(filePath, true))
+            {
+                Debug.Log("Writing the word");
+                writer.WriteLine(word);
+
+            }
+        }
+        catch (IOException e)
+        {
+            Debug.LogError("Error appending to file: " + e.Message);
+        }
+    }
+    /*private void AppendWordToFile(string filePath, string word)
+    {
+        try
+        {
+            // Append the word to the file
+            File.AppendAllText(filePath, Environment.NewLine + word );
+        }
+        catch (IOException e)
+        {
+            Debug.LogError("Error appending to file: " + e.Message);
+        }
+    }*/
+
     #endregion
 
     public string getNextWordFrom(string dataSetName)
     {
         string selectedWord = string.Empty;
-        counter = fileNamesIndex[dataSetName];
+        if (!isFirstTime)
+        {
+            counter = fileNamesIndex[dataSetName];
+            isFirstTime = true;
+        }
+
         try
         {
             List<string> words = wordsList[dataSetName];
-
             if (words == null || words.Count < 0)
                 return "";
 
             selectedWord = words[counter].TrimEnd('\r');
             counter++;
-            fileNamesIndex.Add(dataSetName,counter);
+            fileNamesIndex[dataSetName] = counter;
             if (counter >= words.Count)
                 counter = 0;
 
@@ -182,8 +218,14 @@ public class TextDataProcessor
         }
         catch (Exception ex)
         {
-
+            Debug.Log($"Problem {ex}");
         }
+    }
+    public void WriteDataForSavingWrongWords(string wrongeWord)
+    {
+        //AppendWordToFile(wrongeWord, Path.Combine(Application.streamingAssetsPath,wrongWordFileName+".txt"));
+        WriteToFile(wordsList[wrongWordFileName], Application.streamingAssetsPath + "/" + wrongWordFileName+".txt");
+        //AppendWordToFile(wrongeWord, Application.streamingAssetsPath + "/" + wrongWordFileName+".txt");
     }
 
 }

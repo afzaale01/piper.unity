@@ -105,7 +105,7 @@ public class GameManager : MonoBehaviour
         {
             AttemptCount++;
             // Add the word to wrong queue
-            //textDataProcessor.AddToWrongWordList(input.ToLower().Trim());
+            textDataProcessor.AddToWrongWordList(currentSelectedWord.ToLower().Trim());
             // Store the word in another file and write it streaming assets.
 
             if (AttemptCount >= 2)
@@ -144,7 +144,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"{nameof(GameManager)}:Current State {currnetState}");
     }
-    
+
 }
 
 
