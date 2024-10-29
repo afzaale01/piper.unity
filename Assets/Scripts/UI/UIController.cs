@@ -63,6 +63,9 @@ public class UIController : MonoBehaviour
             SetupDropDown(this._textDataProcessor.GetFileNames());
 
         }
+
+        userInputField.Select();
+        userInputField.ActivateInputField();
     }
 
     private void SetupDropDown(List<string> list)
@@ -124,6 +127,8 @@ public class UIController : MonoBehaviour
     {
         attemptResultText.color = Color.red;
         attemptResultText.text = "Sorry Try again";
+        userInputField.Select();
+        userInputField.ActivateInputField();
     }
 
     private void HandleWin()
