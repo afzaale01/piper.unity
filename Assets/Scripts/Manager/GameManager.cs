@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
     public bool EvaluateCurrentWord(string input)
     {
         // Remove the trailing '\r' from the currentSelectedWord if it exists
-        string cleanedCurrentWord = currentSelectedWord.TrimEnd('\r');
+        string cleanedCurrentWord = currentSelectedWord.TrimEnd('\r').ToLower();
 
         // Compare the cleaned current word with the input string, ignoring case
 

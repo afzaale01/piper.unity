@@ -101,6 +101,7 @@ public class TextDataProcessor
                 // Iterate through the list of words and write each word to a new line
                 foreach (string word in words)
                 {
+                    if(!string.IsNullOrWhiteSpace(word))
                     writer.WriteLine(word);
                 }
             }
