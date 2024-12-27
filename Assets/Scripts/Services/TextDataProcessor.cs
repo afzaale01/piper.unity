@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public class TextDataProcessor
@@ -163,7 +164,7 @@ public class TextDataProcessor
             selectedWord = words[counter].TrimEnd('\r');
             counter++;
             fileNamesIndex[dataSetName] = counter;
-            if (counter >= words.Count)
+            if (counter >= words.Count-1)
                 counter = 0;
 
             return selectedWord;
@@ -187,7 +188,7 @@ public class TextDataProcessor
             // Extract filename without the path
             string filename = Path.GetFileNameWithoutExtension(filePath);
             filenames.Add(filename);
-            wordsList.Add(filename, ReadFromPath(filePath));
+            wordsList.Add(filename, ProcessStringList( ReadFromPath(filePath)));
             fileNamesIndex.Add(filename,PlayerPrefs.GetInt(filename));
             Debug.Log($"{nameof(TextDataProcessor)}: Reading file {filename} from File Path {filePath}");
         }
@@ -225,8 +226,21 @@ public class TextDataProcessor
     public void WriteDataForSavingWrongWords(string wrongeWord)
     {
         //AppendWordToFile(wrongeWord, Path.Combine(Application.streamingAssetsPath,wrongWordFileName+".txt"));
-        WriteToFile(wordsList[wrongWordFileName], Application.streamingAssetsPath + "/" + wrongWordFileName+".txt");
+        var wordsListCleaned = ProcessStringList(wordsList[wrongWordFileName]);
+        WriteToFile(wordsListCleaned, Application.streamingAssetsPath + "/" + wrongWordFileName+".txt");
         //AppendWordToFile(wrongeWord, Application.streamingAssetsPath + "/" + wrongWordFileName+".txt");
+    }
+
+
+    public static List<string> ProcessStringList(List<string> inputList)
+    {
+        // Remove empty strings and trim whitespace
+        var filteredList = inputList.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToList();
+
+        // Remove duplicates while preserving order
+        var distinctList = filteredList.Distinct().ToList();
+
+        return distinctList;
     }
 
 }
